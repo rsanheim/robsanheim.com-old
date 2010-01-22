@@ -32,7 +32,8 @@ end
 
 namespace :jekyll do
   task :initialize do
-    gem 'tomafro-jekyll', '0.5.3.6'
+    gem "jekyll"
+    # gem 'tomafro-jekyll', '0.5.3.6'
     require 'jekyll'
     require 'tomafro/jekyll/tags/post'
     require 'tomafro/jekyll/tags/related'
@@ -117,49 +118,3 @@ namespace :build do
     end
   end
 end
-
-task :publish => ['update_stats', 'build:all', 'render'] do
-  puts `rsync -ave ssh build/* tomafro.net:/var/sites/tomafro.net`
-  `curl "http://rubycorner.com/ping/xmlrpc/aaf9d1cc0ecf5723fd2610063cfa60d82528cd6d"`
-  `curl "http://www.google.com/webmasters/tools/ping?sitemap=http%3A%2F%2Ftomafro.net%2Fsitemap.xml"`
-end
-
-task :update_stats do  
-  unless ENV["ANALYTICS_PASSWORD"]
-    puts "No ANALYTICS_PASSWORD supplied so skipping stats update"
-  else
-    googleAuth = `curl https://www.google.com/accounts/ClientLogin -s \
-    -d Email=tom@popdog.net \
-    -d Passwd=#{ENV["ANALYTICS_PASSWORD"]} \
-    -d accountType=GOOGLE \
-    -d source=curl-accountFeed-v1 \
-    -d service=analytics \
-    | awk /Auth=.*/`.strip
-
-
-    feedUri="https://www.google.com/analytics/feeds/data?start-date=2009-06-01&end-date=#{(Date.today + 1).to_s}&metrics=ga:timeOnSite&max-results=5&ids=ga:17589533&prettyprint=true"
-
-    xml = `curl "#{feedUri}" -s --header "Authorization: GoogleLogin #{googleAuth}"`
-
-    begin
-      doc = Hpricot(xml)
-      seconds = doc.at("//dxp:metric[@name='ga:timeOnSite']")['value']
-      minutes = seconds.to_f / 60
-      days = seconds.to_f / 60 / 60 / 24
-
-      puts "Updating stats to show #{minutes} minutes, #{days} days"
-
-      config = YAML.load_file("site/_config.yml")
-      config["days"] = ("%10.1f" % days)
-      config["minutes"] = ("%10.1f" % minutes)
-      File.open("site/_config.yml", "w") do |out|
-        YAML.dump(config, out)
-      end
-    rescue Object => e
-      puts "Stats could not be updated:"
-      p e
-    end
-  end
-end
-
-# http://rubycorner.com/ping/xmlrpc/aaf9d1cc0ecf5723fd2610063cfa60d82528cd6d
