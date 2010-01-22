@@ -1,7 +1,6 @@
 $: << File.expand_path(File.join(File.dirname(__FILE__), "lib"))
 
-#gem 'tomafro-jekyll', '0.5.3.2'
-#require 'jekyll'
+require 'jekyll'
 require 'set'
 require 'fileutils'
 require 'hpricot'
@@ -30,10 +29,15 @@ def globs(source)
   end
 end
 
+desc "Run the site locally against mongrel with all warnings on"
+task :server do
+  exec "rackup -s mongrel -p 4000 -w"
+end
+
+desc "Init Jekyll" 
 namespace :jekyll do
   task :initialize do
     gem "jekyll"
-    # gem 'tomafro-jekyll', '0.5.3.6'
     require 'jekyll'
     require 'tomafro/jekyll/tags/post'
     require 'tomafro/jekyll/tags/related'
@@ -72,6 +76,7 @@ task :render => 'jekyll:initialize' do
 end
 
 namespace :build do
+  desc "Build before syncing with remote - I think ?"
   task :all => ['build:tags', 'build:archive:by_month', 'build:archive:by_year']
   
   task :tags => 'jekyll:initialize' do
