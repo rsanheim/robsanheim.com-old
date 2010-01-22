@@ -16,7 +16,6 @@ exclude:
 - Rakefile
 - Capfile
 - _site.tar.gz
-- tomafro.net
 pygments: true
 pretty_style: html_extension
 auto: true
